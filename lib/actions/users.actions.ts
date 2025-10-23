@@ -1,37 +1,36 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-
 import User from "../database/models/user.model";
 import { connectToDatabase } from "../database/mongoose";
-import { handleError } from "../utils";
+import logger from "@/lib/logger";
 
 // CREATE
 export async function createUser(user: CreateUserParams) {
   try {
     await connectToDatabase();
-    console.log("Creating user:", user);
+    logger.info('Creating user in MongoDB: %o', user);
+
     const newUser = await User.create(user);
-    console.log("Created:", newUser);
+
+    logger.info('User created successfully: %o', newUser);
     return JSON.parse(JSON.stringify(newUser));
   } catch (error) {
-    console.error("Create user error:", error);
+    logger.error('Error creating user: %o', error);
+    throw error;
   }
 }
-
 
 // READ
 export async function getUserById(userId: string) {
   try {
     await connectToDatabase();
-
     const user = await User.findOne({ clerkId: userId });
-
-    if (!user) throw new Error("User not found");
-
+    if (!user) throw new Error('User not found');
     return JSON.parse(JSON.stringify(user));
   } catch (error) {
-    handleError(error);
+    logger.error('Error reading user %s: %o', userId, error);
+    throw error;
   }
 }
 
@@ -39,16 +38,16 @@ export async function getUserById(userId: string) {
 export async function updateUser(clerkId: string, user: UpdateUserParams) {
   try {
     await connectToDatabase();
+    logger.info('Updating user %s with %o', clerkId, user);
 
-    const updatedUser = await User.findOneAndUpdate({ clerkId }, user, {
-      new: true,
-    });
+    const updatedUser = await User.findOneAndUpdate({ clerkId }, user, { new: true });
+    if (!updatedUser) throw new Error('User update failed');
 
-    if (!updatedUser) throw new Error("User update failed");
-    
+    logger.info('User updated: %o', updatedUser);
     return JSON.parse(JSON.stringify(updatedUser));
   } catch (error) {
-    handleError(error);
+    logger.error('Error updating user %s: %o', clerkId, error);
+    throw error;
   }
 }
 
@@ -56,39 +55,18 @@ export async function updateUser(clerkId: string, user: UpdateUserParams) {
 export async function deleteUser(clerkId: string) {
   try {
     await connectToDatabase();
+    logger.info('Deleting user: %s', clerkId);
 
-    // Find user to delete
     const userToDelete = await User.findOne({ clerkId });
+    if (!userToDelete) throw new Error('User not found');
 
-    if (!userToDelete) {
-      throw new Error("User not found");
-    }
-
-    // Delete user
     const deletedUser = await User.findByIdAndDelete(userToDelete._id);
     revalidatePath("/");
 
+    logger.info('Deleted user: %o', deletedUser);
     return deletedUser ? JSON.parse(JSON.stringify(deletedUser)) : null;
   } catch (error) {
-    handleError(error);
-  }
-}
-
-// USE CREDITS
-export async function updateCredits(userId: string, creditFee: number) {
-  try {
-    await connectToDatabase();
-
-    const updatedUserCredits = await User.findOneAndUpdate(
-      { _id: userId },
-      { $inc: { creditBalance: creditFee }},
-      { new: true }
-    )
-
-    if(!updatedUserCredits) throw new Error("User credits update failed");
-
-    return JSON.parse(JSON.stringify(updatedUserCredits));
-  } catch (error) {
-    handleError(error);
+    logger.error('Error deleting user %s: %o', clerkId, error);
+    throw error;
   }
 }
