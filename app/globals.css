@@ -56,6 +56,26 @@
     @apply flex-center min-h-screen w-full bg-purple-100;
   }
 
+  .root {
+    @apply flex flex-col;
+
+    @variant lg {
+      @apply flex-row;
+    }
+  }
+
+  .header {
+    @apply flex-1;
+  }
+
+  .root-container {
+    @apply mt-16 overflow-auto p-8;
+
+    @variant lg {
+      @apply mt-0 max-h-screen py-10;
+    }
+  }
+
   .sidebar {
     @apply hidden h-screen w-72 bg-white p-5 shadow-md shadow-purple-200/50;
 
@@ -113,6 +133,10 @@
   .activeText {
     color: var(--primary-color-dull);
   }
+
+  .h2-bold {
+    @apply text-[30px] font-bold md:text-[36px] leading-[110%];
+  }
 }
 
 @utility bg-purple-gradient {
@@ -133,5 +157,8 @@
 }
 
 @utility p-16-semibold {
+  @apply font-semibold text-[16px];
+}
+@utility p-16-regular {
   @apply font-semibold text-[16px];
 }

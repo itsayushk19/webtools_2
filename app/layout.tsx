@@ -21,22 +21,17 @@ export const metadata: Metadata = {
   description: "Collection of awesome and useful Tools In Your Browser",
 };
 
-export default function RootLayout({
-  children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <ClerkProvider appearance={{
-      variables: {colorPrimary: '#E75C5A'
-      }
-    }}>
+    <ClerkProvider
+      appearance={{ variables: { colorPrimary: "#E75C5A" } }}
+    >
       <html lang="en">
-        <body
-          className={cn("font-IBMPlex antialiased", IBMPlex.variable)}>
+        <body className={cn(IBMPlex.className, "antialiased")}>
           {children}
         </body>
       </html>
     </ClerkProvider>
   );
 }
+

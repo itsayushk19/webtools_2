@@ -119,47 +119,132 @@ export const plans = [
   },
 ];
 
-export const transformationTypes = {
-  restore: {
-    type: "restore",
-    title: "Restore Image",
-    subTitle: "Refine images by removing noise and imperfections",
-    config: { restore: true },
-    icon: "image.svg",
-  },
-  removeBackground: {
-    type: "removeBackground",
-    title: "Background Remove",
-    subTitle: "Removes the background of the image using AI",
-    config: { removeBackground: true },
-    icon: "camera.svg",
-  },
-  fill: {
-    type: "fill",
-    title: "Generative Fill",
-    subTitle: "Enhance an image's dimensions using AI outpainting",
-    config: { fillBackground: true },
-    icon: "stars.svg",
-  },
-  remove: {
-    type: "remove",
-    title: "Object Remove",
-    subTitle: "Identify and eliminate objects from images",
+export const ActivityTypes = {
+  case_convertor: {
+    type: "text_tools",
+    title: "Case Convertor",
+    subTitle: "Effortlessly convert between text cases",
     config: {
-      remove: { prompt: "", removeShadow: true, multiple: true },
+      fields: [
+        {
+          name: "text",
+          label: "Enter your text",
+          type: "textarea",
+          placeholder: "Type or paste text here...",
+          validation: { required: true, minLength: 1 },
+        },
+        {
+          name: "option",
+          label: "Convert to",
+          type: "select",
+          options: ["uppercase", "lowercase", "titlecase", "camelcase", "snakecase"],
+          defaultValue: "uppercase",
+          validation: { required: true },
+        },
+      ],
     },
-    icon: "scan.svg",
   },
-  recolor: {
-    type: "recolor",
-    title: "Object Recolor",
-    subTitle: "Identify and recolor objects from the image",
+
+  lorem_ipsum: {
+    type: "text_tools",
+    title: "Lorem Ipsum Generator",
+    subTitle: "Easy to generate Lorem Ipsum for your placeholder text",
+    icon: "lorem_ipsum.svg",
     config: {
-      recolor: { prompt: "", to: "", multiple: true },
-    },
-    icon: "filter.svg",
+      fields: [
+      {
+        name: "paragraphs",
+        label: "Number of Paragraphs",
+        type: "number",
+        defaultValue: 3,
+        validation: { required: true }
+      },
+      {
+        name: "wordsPerParagraph",
+        label: "Words per Paragraph",
+        type: "number",
+        defaultValue: 50,
+        validation: { required: true }
+      },
+      {
+        name: "includeHTML",
+        label: "Include HTML Tags",
+        type: "checkbox",
+        defaultValue: false,
+        validation: { required: true }
+      },
+    ],
+    }
   },
-};
+
+  remove_whitespace: {
+    type: "text_tools",
+    title: "Whitespace Remover",
+    subTitle: "Remove annoying whitespaces and optimize your text",
+    icon: "remove_whitespace.svg",
+    config: {
+      fields: [
+      {
+        name: "text",
+        label: "Enter Text",
+        type: "textarea",
+        placeholder: "Paste your text here...",
+        validation: { required: true }
+      },
+      {
+        name: "removeExtraSpaces",
+        label: "Remove Extra Spaces",
+        type: "checkbox",
+        defaultValue: true,
+        validation: { required: true }
+      },
+      {
+        name: "trimLines",
+        label: "Trim Each Line",
+        type: "checkbox",
+        defaultValue: true,
+        validation: { required: true }
+      },
+      {
+        name: "removeNewLines",
+        label: "Remove New Lines",
+        type: "checkbox",
+        defaultValue: false,
+        validation: { required: true }
+      },
+    ],
+    }
+  },
+
+  word_counter: {
+    type: "text_tools",
+    title: "Word Counter",
+    subTitle: "Count words, sentences and characters in your text easily",
+    icon: "word_counter.svg",
+    config:{
+      fields: [
+      {
+        name: "text",
+        label: "Enter Text",
+        type: "textarea",
+        placeholder: "Paste text to analyze...",
+        validation: { required: true }
+      },
+      {
+        name: "includeSpaces",
+        label: "Include Spaces in Count",
+        type: "checkbox",
+        defaultValue: false,
+        validation: { required: true }
+      },
+    ],
+    }
+  },
+} as const;
+
+
+export type ActivityTypeKey = keyof typeof ActivityTypes
+
 
 export const aspectRatioOptions = {
   "1:1": {
