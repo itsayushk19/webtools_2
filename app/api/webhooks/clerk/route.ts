@@ -35,12 +35,12 @@ export async function POST(req: Request) {
             "svix-signature": svix_signature,
         }) as WebhookEvent;
     } catch (err) {
-        console.error("❌ Webhook signature verification failed:", err);
+        console.error("Webhook signature verification failed:", err);
         return new Response("Invalid signature", { status: 400 });
     }
 
     const eventType = evt.type;
-    console.log(`➡️ Webhook received: ${eventType}`);
+    console.log(`Webhook received: ${eventType}`);
 
     try {
         if (eventType === "user.created") {
@@ -84,16 +84,30 @@ export async function POST(req: Request) {
         }
 
         if (eventType === "user.deleted") {
-            const { id } = evt.data;
-            console.log("🔴 Deleting user:", id);
-            const deletedUser = await deleteUser(id);
-            return NextResponse.json({ message: "OK", user: deletedUser });
+            const { id: clerkId } = evt.data;
+
+            if (!clerkId) {
+                console.error("user.deleted event has no id");
+                return new Response("Missing user ID", { status: 400 });
+            }
+
+            console.log("Deleting user:", clerkId);
+
+            try {
+                const deletedUser = await deleteUser(clerkId);
+                console.log("Deleted user:", deletedUser?._id);
+                return NextResponse.json({ message: "OK", user: deletedUser });
+            } catch (err) {
+                console.error("Error deleting user:", err);
+                return new Response("Server error deleting user", { status: 500 });
+            }
         }
 
-        console.log("ℹ️ Unknown event:", eventType);
+
+        console.log("ℹUnknown event:", eventType);
         return new Response("Unhandled event", { status: 200 });
     } catch (err) {
-        console.error("❌ Error handling webhook:", err);
+        console.error("Error handling webhook:", err);
         return new Response("Server error", { status: 500 });
     }
 }
