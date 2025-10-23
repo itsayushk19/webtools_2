@@ -6,6 +6,8 @@ export default clerkMiddleware(async (auth, req) => {
   if (!isPublicRoute(req)) {
     await auth.protect()
   }
+
+  publicRoutes: ['/', '/api/webhooks/clerk', '/api/webhooks/stripe']
 })
 
 export const config = {
