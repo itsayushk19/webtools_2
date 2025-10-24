@@ -4,6 +4,7 @@ import "./globals.css";
 import "./reset.css";
 import { cn } from "@/lib/utils";
 import { ClerkProvider } from "@clerk/nextjs";
+import { Toaster } from "@/components/ui/sonner"
 
 const IBMPlex = IBM_Plex_Sans({
   variable: "--font-ibm-plex",
@@ -29,6 +30,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <html lang="en">
         <body className={cn(IBMPlex.className, "antialiased")}>
           {children}
+          <Toaster />
         </body>
       </html>
     </ClerkProvider>

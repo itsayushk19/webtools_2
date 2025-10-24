@@ -24,7 +24,7 @@ const Sidebar = () => {
                 const isActive = link.route === pathname
 
                 return (
-                  <li key={link.route} className={`sidebar-nav_element group ${isActive ? 'activeBgGradient text-white' : 'text-gray-700'
+                  <li key={link.route} className={`sidebar-nav_element group ${isActive ? 'activeElement' : 'text-gray-700'
                     }`}>
                     <Link className="sidebar-link" href={link.route}>
                       <Image

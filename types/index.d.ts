@@ -88,7 +88,7 @@ declare type CreateTransactionParams = {
   createdAt: Date;
 };
 
-declare type TransformationTypeKey =
+declare type ActivityTypeKey =
   | "restore"
   | "fill"
   | "remove"
@@ -118,10 +118,10 @@ declare type SearchParamProps = {
   searchParams: { [key: string]: string | string[] | undefined };
 };
 
-declare type TransformationFormProps = {
+declare type ActivityFormProps = {
   action: "Add" | "Update";
   userId: string;
-  type: TransformationTypeKey;
+  type: ActivityTypeKey;
   creditBalance: number;
   data?: IImage | null;
   config?: Transformations | null;

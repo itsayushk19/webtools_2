@@ -1,94 +1,228 @@
-"use client";
+"use client"
+import Link from "next/link"
+import * as z from "zod"
+import { zodResolver } from "@hookform/resolvers/zod"
+import { useForm } from "react-hook-form"
+import { CustomField } from "./CustomField"
+import { Button } from "../ui/button"
+import MediaUploader from "./MediaUploader"
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select"
 
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { buildSchemaFromConfig } from "@/lib/activity/build-schema";
-import { ActivityTypes } from "@/constants/index";
-import { ActivityLayouts } from "@/lib/activity/activity-layouts";
+import {
+    Form,
+    FormControl,
+    FormDescription,
+    FormField,
+    FormItem,
+    FormLabel,
+    FormMessage,
+} from "@/components/ui/form"
+import { Input } from "@/components/ui/input"
+import { activityTypes, aspectRatioOptions, defaultValues } from "@/constants"
+import { useState, useTransition } from "react"
+import { AspectRatioKey, debounce, deepMergeObjects } from "@/lib/utils"
 
-export default function ActivityForm({ activityKey }) {
-  const tool = ActivityTypes[activityKey];
-  const layout = ActivityLayouts[activityKey];
-  const schema = buildSchemaFromConfig(tool.config);
+export const formSchema = z.object({
+    title: z.string(),
+    aspectRatio: z.string().optional(),
+    color: z.string().optional(),
+    publicId: z.string(),
 
-  const form = useForm({
-    resolver: zodResolver(schema),
-    defaultValues: Object.fromEntries(
-      tool.config.fields.map(f => [f.name, f.defaultValue ?? ""])
-    ),
-  });
+})
 
-  const onSubmit = (data) => console.log("✅ Form submitted:", data);
+const ActivityForm = ({ action, data = null, userId, type, creditBalance, config = null }: ActivityFormProps) => {
 
-  return (
-    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-      {layout.layout.map((row, i) => (
-        <div
-          key={i}
-          className={
-            row.type === "grid"
-              ? `grid grid-cols-${row.columns} gap-4`
-              : "flex flex-col gap-4"
-          }
-        >
-          {row.fields.map((fieldName) => {
-            const field = tool.config.fields.find(f => f.name === fieldName);
-            if (!field) return null;
+    const activityType = activityTypes[type]
+    const [image, setImage] = useState(data)
+    const [newActivity, setNewActivity] = useState(null)
+    const [tranformationConfig, setTranformationConfig] = useState(config)
+    const [isTransforming, setIsTransforming] = useState(false)
+    const [isSubmitting, setIsSubmitting] = useState(false)
+    const [isPending, startActivity] = useTransition()
 
-            switch (field.type) {
-              case "textarea":
-                return (
-                  <div key={field.name}>
-                    <label>{field.label}</label>
-                    <textarea {...form.register(field.name)} placeholder={field.placeholder} />
-                  </div>
-                );
 
-              case "select":
-                return (
-                  <div key={field.name}>
-                    <label>{field.label}</label>
-                    <select {...form.register(field.name)}>
-                      {field.options.map(opt => (
-                        <option key={opt} value={opt}>{opt}</option>
-                      ))}
-                    </select>
-                  </div>
-                );
+    const initialValues = data && action === 'update' ? {
+        title: data?.title,
+        aspectRatio: data?.aspectRatio,
+        color: data?.color,
+        prompt: data?.prompt,
+        publicId: data?.publicId,
+    } : defaultValues
+    const form = useForm<z.infer<typeof formSchema>>({
+        resolver: zodResolver(formSchema),
+        defaultValues: initialValues
+    })
 
-              case "slider":
-                return (
-                  <div key={field.name}>
-                    <label>{field.label}</label>
-                    <input type="range" min={field.min} max={field.max} step={field.step} {...form.register(field.name)} />
-                  </div>
-                );
+    function onSubmit(values: z.infer<typeof formSchema>) {
 
-              case "checkbox":
-                return (
-                  <div key={field.name} className="flex items-center gap-2">
-                    <input type="checkbox" {...form.register(field.name)} />
-                    <label>{field.label}</label>
-                  </div>
-                );
+    }
 
-              default:
-                return (
-                  <input
-                    key={field.name}
-                    {...form.register(field.name)}
-                    placeholder={field.placeholder}
-                    className="border rounded px-2 py-1"
-                  />
-                );
-            }
-          })}
+    const onSelectFieldHandler = (value: string, onChangeField: (value: string) => void) => {
+        const imageSize = aspectRatioOptions[value as AspectRatioKey]
+
+        setImage((prevState) => ({
+            ...prevState,
+            aspectRatio: imageSize.aspectRatio,
+            width: imageSize.width,
+            height: imageSize.height,
+
+        }))
+
+        setNewActivity(activityType.config)
+
+        return onChangeField(value)
+    }
+
+    const onInputChangeHandler = (fieldName: string, value: string, type: string, onChangeField: (value: string) =>
+        void) => {
+        debounce(() => {
+            setNewActivity((prevState: any) => ({
+                ...prevState,
+                [type]: {
+                    ...prevState?.[type],
+                    [fieldName === 'prompt' ? 'prompt' : 'to']:
+                        value
+                }
+            }))
+
+            return onChangeField(value)
+        }, 1000)
+
+    }
+
+    const onActivityHandler = async () => {
+        setIsTransforming(true)
+
+        deepMergeObjects(newActivity, tranformationConfig)
+
+        setNewActivity(null)
+        startActivity(async () => {
+            // await updateCredits(userId, creditFee)
+        })
+    }
+    return (
+        <div className="form-container">
+            <Form {...form}>
+                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+                    <CustomField
+                        control={form.control}
+                        name="title"
+                        formLabel="Image title"
+                        className="w-full"
+                        render={({ field }) => <Input{...field} className="input-field" />}
+                    />
+                    {type === 'fill' && (
+                        <CustomField
+                            control={form.control}
+                            name="aspectRatio"
+                            formLabel="Aspect Ratio"
+                            className="w-full"
+                            render={({ field }) => (
+                                <Select
+                                    value={field.value}
+                                    onValueChange={(val) => onSelectFieldHandler(val, field.onChange)}
+                                >
+                                    <SelectTrigger className="w-[180px]">
+                                        <SelectValue placeholder="Select Size" />
+                                    </SelectTrigger>
+                                    <SelectContent className="helloworld">
+                                        {Object.keys(aspectRatioOptions).map((key) => (
+                                            <SelectItem key={key} value={key} className="select-item">
+                                                {aspectRatioOptions[key as AspectRatioKey].label}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+
+                            )} />
+                    )}
+
+                    {(type === "remove" || type === 'recolor') && (
+                        <div className="prompt-field">
+                            <CustomField control={form.control}
+                                name="prompt"
+                                formLabel={
+                                    type === 'remove' ? 'Object To Remove' : 'Object to recolor'
+                                }
+                                className="w-full"
+                                render={(({ field }) => (
+                                    <Input
+                                        value={field.value}
+                                        className="input-field"
+                                        onChange={(e) => onInputChangeHandler(
+                                            'prompt',
+                                            e.target.value,
+                                            type,
+                                            field.onChange
+                                        )}
+                                    />
+                                ))}
+                            />
+
+                            {type === 'recolor' && (
+                                <CustomField
+                                    control={form.control}
+                                    name='color'
+                                    formLabel='Replacement color'
+                                    className='w-full'
+                                    render={({ field }) => (
+                                        <Input
+                                            value={field.value}
+                                            className="input-field"
+                                            onChange={(e) => onInputChangeHandler(
+                                                'prompt',
+                                                e.target.value,
+                                                type,
+                                                field.onChange
+                                            )}
+                                        />
+                                    )}
+                                />
+                            )}
+                        </div>
+                    )}
+
+                            <div className="media-uploader-field">
+          <CustomField 
+            control={form.control}
+            name="publicId"
+            className="flex size-full flex-col"
+            render={({ field }) => (
+              <MediaUploader 
+                onValueChange={field.onChange}
+                setImage={setImage}
+                publicId={field.value}
+                image={image}
+                type={type}
+              />
+            )}
+          />
         </div>
-      ))}
+                    <div className="flex flex-col gap-4">
+                        <Button className="submit-button capitalize" type='button' disabled={isTransforming || newActivity === null}
+                            onClick={onActivityHandler}
+                        >
 
-      <button type="submit" className="px-4 py-2 bg-blue-500 text-white rounded">
-        Submit
-      </button>
-    </form>
-  );
+                            {isTransforming ? 'Transforming...' : 'Apply Transformation'}
+                        </Button>
+                        <Button className="submit-button capitalize" type='submit' disabled={isSubmitting}>
+
+                            {isSubmitting ? 'Submitting...' : 'Save Image'}
+                        </Button>
+                    </div>
+
+
+
+                </form>
+            </Form>
+        </div>
+    )
 }
+
+export default ActivityForm
